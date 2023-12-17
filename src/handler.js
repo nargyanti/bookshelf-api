@@ -33,8 +33,6 @@ const addBookHandler = (request, h) => {
     updatedAt,
   };
 
-  books.push(newBook);
-
   let response;
   if (!name || name.trim().length === 0) {
     response = h.response({
@@ -50,6 +48,7 @@ const addBookHandler = (request, h) => {
     });
     response.code(400);
   } else {
+    books.push(newBook);
     response = h.response({
       status: 'success',
       message: 'Buku berhasil ditambahkan',
@@ -65,31 +64,32 @@ const addBookHandler = (request, h) => {
 const getAllBooksHandler = (request) => {
   const { name, reading, finished } = request.query;
 
-  let filteredBooks = [...books];
+  let filteredBooks = books;
 
-  if (name !== undefined) {
-    const lowercaseName = name.toLowerCase();
-    filteredBooks = filteredBooks.filter((book) => book.name.toLowerCase().includes(lowercaseName));
+  if (typeof name !== 'undefined') {
+    filteredBooks = filteredBooks.filter((b) => b.name.toLowerCase().includes(name.toLowerCase()));
   }
 
-  if (reading !== undefined) {
+  if (typeof reading !== 'undefined') {
     const isReading = reading === '1';
-    filteredBooks = filteredBooks.filter((book) => book.reading === isReading);
+    filteredBooks = filteredBooks.filter((b) => b.reading === isReading);
   }
 
-  if (finished !== undefined) {
+  if (typeof finished !== 'undefined') {
     const isFinished = finished === '1';
-    filteredBooks = filteredBooks.filter((book) => book.finished === isFinished);
+    filteredBooks = filteredBooks.filter((b) => b.finished === isFinished);
   }
+
+  filteredBooks = filteredBooks.map((book) => ({
+    id: book.id,
+    name: book.name,
+    publisher: book.publisher,
+  }));
 
   return {
     status: 'success',
     data: {
-      books: filteredBooks.map((book) => ({
-        id: book.id,
-        name: book.name,
-        publisher: book.publisher,
-      })),
+      books: filteredBooks,
     },
   };
 };
@@ -97,7 +97,7 @@ const getAllBooksHandler = (request) => {
 const getBookByIdHandler = (request, h) => {
   const { id } = request.params;
 
-  const book = books.filter((n) => n.id === id)[0];
+  const book = books.filter((b) => b.id === id)[0];
 
   if (book !== undefined) {
     return {
